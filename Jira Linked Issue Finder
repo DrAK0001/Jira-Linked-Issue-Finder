@@ -1,0 +1,27 @@
+import com.atlassian.jira.component.ComponentAccessor
+
+// Get the current issue
+def issue = issue // Assuming this script is being run within a context where 'issue' is available
+
+def issueManager = ComponentAccessor.getIssueManager()
+def currentIssueKey = issue.key
+def currentIssue = issueManager.getIssueByCurrentKey(currentIssueKey)
+
+// Get the value of customfield_14001 from the current issue
+def customFieldValue = issue.get("customfield_14001")
+
+if (currentIssue && customFieldValue) {
+    def issueLinkManager = ComponentAccessor.getIssueLinkManager()
+    def linkedIssues = issueLinkManager.getOutwardLinks(currentIssue.id).collect { link ->
+        def linkedIssue = link.destinationObject
+        def linkedIssueCustomFieldValue = linkedIssue.get("customfield_14001")
+
+        if (linkedIssueCustomFieldValue && linkedIssueCustomFieldValue.equals(customFieldValue)) {
+            linkedIssue.key
+        } else {
+            null
+        }
+    }.findAll { it != null }
+
+    linkedIssues
+}
